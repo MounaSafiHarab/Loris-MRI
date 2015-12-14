@@ -29,7 +29,7 @@ Arguments:
 =cut
 sub new {
     my $params = shift;
-    my ( $dbhr, $uploaded_temp_folder, $upload_id, $pname, $profile, $verbose ) = @_;
+    my ( $dbhr, $uploaded_temp_folder, $upload_id, $pname, $profile, $verbose, $nocleanup ) = @_;
     unless ( defined $dbhr ) {
         croak( "Usage: " . $params . "->new(\$databaseHandleReference)" );
     }
@@ -267,7 +267,7 @@ Description:
 Arguments:
  $this: reference to the class
 
- Returns: 0 if the validation fails and 1 if passes
+ Returns: archive location
 =cut
 sub getTarchiveFileLocation {
     my $this             = shift;
@@ -396,20 +396,31 @@ Description:
 Arguments:
  $this      : Reference to the class
 
- Returns    : NULL
+ Returns: 0 if the validation fails and 1 if passes
+
 =cut
 
 sub moveUploadedFile {
     my $this            = shift;
-    my $incoming_folder = $Settings::getIncomingDir;
-    if (!$incoming_folder) {
+    my $incoming_folder_bk = $Settings::getIncomingDirBK;
+print "\n the incoming folder bk is $incoming_folder_bk\n";
+
+    if (!$incoming_folder_bk) {
         return 0;
     }
-    my $cmd = "mv " . $this->{'uploaded_temp_folder'} . 
-	      " " . $incoming_folder;
-    $this->runCommand($cmd);
-}
 
+   my ($filename,$uploaded_file_path) = getFileUploadPath($this->{'upload_id'}); 
+
+print "\n the filename is $filename\n";
+print "\n The upload path is $uploaded_file_path\n";
+print "\n the filder bk is $incoming_folder_bk\n";
+
+   my $cmd = "mv" . $uploaded_file_path " " . $incoming_folder_bk;
+    my $output = $this->runCommandWithExitCode($cmd);
+    if ( $output == 0 ) {
+        return 1;
+    }
+}
 
 
 
@@ -483,30 +494,41 @@ sub runCommand {
 }
 
 ################################################################
-#############################CleanUpTMPDir######################
+##########################CleanUploadDir########################
 ################################################################
 =pod
-CleanUpTMPDir()
+CleanUploadDir()
 Description:
-   - Cleans Up and removes the uploaded TMP file/directory 
+   - Cleans Up and removes the uploaded file/directory 
      once it is moved by the moveUploadedFile() function
 
 Arguments:
  $this      : Reference to the class
 
- Returns    : NULL
+ Returns: 0 if the validation fails and 1 if passes
 =cut
 
-sub CleanUpTMPDir {
-    my $this = shift;
-    ############################################################
-    ####Removes the uploaded directory if exists################
-    ############################################################
-    if ( -d $this->{'uploaded_temp_folder'} ) {
-        rmdir( $this->{'uploaded_temp_folder'} );
-    }
-}
+sub CleanUploadDir {
 
+    my $this            = shift;
+    my ($filename,$uploaded_file_path) = getFileUploadPath($this->{'upload_id'});
+
+    if  (!($uploaded_file_path =~ /tmp/)) {
+    	if (!$nocleanup) {
+                my $cmd = "rm ". $filename;
+ 	        my $output = $this->runCommandWithExitCode($cmd);
+        }
+    }
+    else {
+        my $cmd = "rm -rf". $uploaded_file_path;
+        my $output = $this->runCommandWithExitCode($cmd);
+    }
+
+    if ( $output == 0 ) {
+        return 1;
+    }
+
+}
 
 ################################################################
 #################spool##########################################
@@ -551,7 +573,7 @@ sub updateMRIUploadTable  {
     my $this = shift;
 
     my ( $field, $value ) = @_;
-    ########################################################
+    	########################################################
         #################Update MRI_upload table accordingly####
         ########################################################
         my $where = "WHERE UploadID=?";
@@ -561,4 +583,34 @@ sub updateMRIUploadTable  {
         $mri_upload_update->execute( $value,$this->{'upload_id'} );
 }
 
+
+################################################################
+######################getFileUploadPath#########################
+################################################################
+=pod
+getFileUploadPath()
+Description:
+ -Extracts uploadLocation using uploadID
+
+Arguments:
+ $this: reference to the class
+
+ Returns: uploaded file path and the filename using the uploadID
+=cut
+
+sub getFileUploadPath {
+    my $this             = shift;
+    my $full_path	 = '';
+    my $query            = "SELECT m.UploadLocation FROM mri_upload m "
+                           	. " WHERE m.UploadID =?";
+    my $sth              = ${ $this->{'dbhr'} }->prepare($query);
+    $sth->execute( $this->{'upload_id'} );
+    if ( $sth->rows > 0 ) {
+        $full_path = $sth->fetchrow_array();
+        my ($filename, $uploaded_file_path) = fileparse($full_path);
+    }
+    return ($filename, $uploaded_file_path);
+}
+
 1;
+

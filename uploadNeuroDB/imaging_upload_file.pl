@@ -5,6 +5,7 @@ use Carp;
 use Getopt::Tabular;
 use FileHandle;
 use File::Temp qw/ tempdir /;
+use File::Basename;
 use Data::Dumper;
 use FindBin;
 use Cwd qw/ abs_path /;
@@ -38,6 +39,7 @@ my $output              = undef;
 my $uploaded_file       = undef;
 my $message             = undef;
 my $verbose             = 0;           # default for now
+my $nocleanup           = 0;
 my @opt_table           = (
     [ "Basic options", "section" ],
     [
@@ -49,6 +51,7 @@ my @opt_table           = (
         "The uploadID of the given scan uploaded"
     ],
     ["-verbose", "boolean", 1,   \$verbose, "Be verbose."],
+    ["-nocleanup", "boolean", 1,   \$nocleanup, "Do not cleanup upload directory."],
     [ "Advanced options", "section" ],
     [ "Fancy options", "section" ]
 );
@@ -165,7 +168,8 @@ my $imaging_upload =
                                $upload_id,
                                $pname, 
                                $profile,
-                               $verbose 
+                               $verbose,
+			       $nocleanup 
                              );
 
 ################################################################
@@ -223,21 +227,39 @@ if ( !$output ) {
 $message = "\n The insertion Script has successfully completed";
 spool($message,'N');
 
+=pod
 ################################################################
 ######### moves the uploaded folder to the Incoming Directory####
 ################################################################
-if (!$imaging_upload->moveUploadedFile()) {
-    $message = "\n The file cannot be moved. Make sure the getIncomingDir".
-               "config option is set\n";
+print "\n I am entering the move file\n";
+$output = $imaging_upload->moveUploadedFile();
+if (!$output) {
+    $message = "\n The file cannot be moved. Make sure the ".
+		"getIncomingDir config option is set\n";
     spool($message,'Y');
     print $message;
     exit 9;
 }
+$message = "\n The file was successfully moved to your incoming ".
+                "data backup folder\n";
+print $message;
+spool($message,'N');
 
+=cut
 ################################################################
 ############### removes the uploaded folder from the /tmp########
 ################################################################
-$imaging_upload->CleanUpTMPDir();
+$output = $imaging_upload->CleanUploadDir();
+if (!$output) {
+    $message = "\n The file cannot be moved \n";
+    spool($message,'Y');
+    exit 10;
+}
+$message = "\n The file was successfully removed from your ".
+                "upload folder\n";
+print $message;
+spool($message,'N');
+
 
 ################################################################
 ############### getPnameUsingUploadID###########################
