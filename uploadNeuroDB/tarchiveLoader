@@ -348,7 +348,7 @@ my @minc_files = ();
 $utility->get_mincs(\@minc_files);
 my $mcount = $#minc_files + 1;
 print "\nNumber of MINC files that will be considered for inserting ".
-      "into the database: $mcount\n";
+      "into the database: $mcount\n" if $verbose;
 ################################################################
 # If no good data was found stop processing and write error log.
 ################################################################
@@ -388,7 +388,8 @@ foreach my $minc (@minc_files) {
     ###########################################################
 
     $script = "minc_insertion.pl -tarchivePath $tarchive ".
-              "-mincPath $minc -profile $profile";
+        	      "-mincPath $minc -profile $profile";
+
     if ($force) {
         $script .= " -force";
     }
@@ -401,7 +402,8 @@ foreach my $minc (@minc_files) {
         $script .= " -noJIV";
     }
  
-    if ($debug) {
+    if ($verbose) {
+        $script .= " -verbose";
         print $script . "\n";
     }
     ###########################################################
@@ -433,7 +435,7 @@ if ($valid_study) {
     my $query = "UPDATE mri_upload SET number_of_mincInserted=?, ".
                  "number_of_mincCreated=? ";
     $query = $query . $where;
-    if ($debug) {
+    if ($verbose) {
         print $query . "\n";
     }
 
@@ -449,7 +451,7 @@ if ($valid_study) {
     $where = "WHERE TarchiveSource =? ";
     $query = "SELECT Min(FileID) AS min, Max(FileID) as max FROM files ";
     $query = $query . $where;
-    if ($debug) {
+    if ($verbose) {
         print $query . "\n";
     }
     my $sth = $dbh->prepare($query);
@@ -486,7 +488,7 @@ if ($valid_study) {
             "JOIN mri_upload m ON (m.tarchiveID=t.tarchiveID) ".
             "SET t.SessionID =?, m.sessionID=? ";
      $query = $query . $where;
-     if ($debug) {
+     if ($verbose) {
         print $query . "\n";
      }
      my $session_update = $dbh->prepare($query);

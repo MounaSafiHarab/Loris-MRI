@@ -87,6 +87,9 @@ my @opt_table = (
                  ["-xlog", "boolean", 1, \$xlog, "Open an xterm with a tail".
                   " on the current log file."],
 
+                 ["General options", "section"],
+                 ["-verbose", "boolean", 1,   \$verbose, "Be verbose."],
+
 );
 
 
@@ -268,8 +271,7 @@ my $file = $utility->loadAndCreateObjectFile($minc);
 ##### Optionally do extra filtering, if needed #################
 ################################################################
 if (defined(&Settings::filterParameters)) {
-    print LOG " --> using user-defined filterParameters for $minc\n"
-    if $verbose;
+    print LOG " --> using user-defined filterParameters for $minc\n";
     Settings::filterParameters(\$file);
 }
 
@@ -310,7 +312,7 @@ my ($sessionID, $requiresStaging) =
 ################################################################
 my $unique = $utility->computeMd5Hash($file);
 if (!$unique) { 
-    print "--> WARNING: This file has already been uploaded! \n"  if $debug;
+    print "--> WARNING: This file has already been uploaded! \n"  if $verbose;
     print LOG " --> WARNING: This file has already been uploaded!"; 
 #    exit 8; 
 } 
@@ -370,7 +372,7 @@ $notifier->spool(
     $centerID
 );
 
-print "\nFinished file:  ".$file->getFileDatum('File')." \n" if $debug;
+print "\nFinished file:  ".$file->getFileDatum('File')." \n" if $verbose;
 
 
 ################################################################

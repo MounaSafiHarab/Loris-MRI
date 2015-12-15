@@ -26,6 +26,7 @@ Arguments:
   $upload_id:
   $pname: 
   $profile:
+  $verbose:
 =cut
 sub new {
     my $params = shift;
@@ -221,11 +222,21 @@ sub runDicomTar {
     my $query             = '';
     my $where             = '';
     my $tarchive_location = $Settings::tarchiveLibraryDir;
-    my $dicomtar = 
+    my $dicomtar =
       $Settings::bin_dir . "/" . "dicom-archive" . "/" . "dicomTar.pl";
-    my $command =
-        $dicomtar . " " . $this->{'uploaded_temp_folder'} 
-      . " $tarchive_location -clobber -database -profile prod";
+    my $command           = '';
+
+    if ($this->{'verbose'}){
+	       $command =
+        	$dicomtar . " " . $this->{'uploaded_temp_folder'}
+      		. " $tarchive_location -clobber -database -profile prod -verbose";
+   }
+   else {
+               $command =
+                $dicomtar . " " . $this->{'uploaded_temp_folder'}
+                . " $tarchive_location -clobber -database -profile prod"
+   }
+
     my $output = $this->runCommandWithExitCode($command);
 
     if ( $output == 0 ) {
@@ -305,10 +316,21 @@ Arguments:
 sub runTarchiveLoader {
     my $this               = shift;
     my $archived_file_path = $this->getTarchiveFileLocation();
-    my $command =
-        $Settings::bin_dir
-      . "/uploadNeuroDB/tarchiveLoader"
-      . " -globLocation -profile prod $archived_file_path";
+    my $command            = '';
+
+    if ($this->{'verbose'}){
+	    $command =
+        	$Settings::bin_dir
+      		. "/uploadNeuroDB/tarchiveLoader"
+      		. " -globLocation -profile prod $archived_file_path -verbose";
+    }
+    else {
+            $command =
+                $Settings::bin_dir
+                . "/uploadNeuroDB/tarchiveLoader"
+                . " -globLocation -profile prod $archived_file_path";
+    }
+
     my $output = $this->runCommandWithExitCode($command);
     if ( $output == 0 ) {
         return 1;

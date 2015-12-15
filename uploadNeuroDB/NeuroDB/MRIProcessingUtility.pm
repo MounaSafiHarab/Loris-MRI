@@ -8,6 +8,7 @@ use File::Basename;
 use NeuroDB::File;
 use NeuroDB::MRI;
 use NeuroDB::DBI;
+use NeuroDB::Notify;
 use Path::Class;
 
 ################################################################
@@ -22,8 +23,19 @@ sub new {
        );
     }
     my $self = {};
+
+
     ############################################################
-    #### Create the log file ###################################
+    ############### Create a settings package ##################
+    ############################################################
+    my $profile = "prod";
+    {
+     package Settings;
+     do "$ENV{LORIS_CONFIG}/.loris_mri/$profile";
+    }
+
+    ############################################################
+    #### Create the log file and a Notify Object################
     ############################################################
     my $LogDir  = dirname($logfile);
     my $file_name = basename($logfile);
@@ -31,15 +43,8 @@ sub new {
     my $file = $dir->file($file_name);
     my $LOG = $file->openw();
     $LOG->autoflush(1);
+    my $Notify = NeuroDB::Notify->new($dbhr);
 
-    ############################################################
-    ############### Create a settings package ##################
-    ############################################################
-    my $profile = "prod";
-    {  
-     package Settings; 
-     do "$ENV{LORIS_CONFIG}/.loris_mri/$profile";
-    }
     $self->{'LOG'} = $LOG;
     $self->{'verbose'} = $verbose;
     $self->{'LogDir'} = $LogDir;
@@ -47,6 +52,8 @@ sub new {
     $self->{'debug'} = $debug;
     $self->{'TmpDir'} = $TmpDir;
     $self->{'logfile'} = $logfile;
+    $self->{'Notify'} = $Notify;
+
     return bless $self, $params;
 }
 
@@ -58,7 +65,7 @@ sub new {
 sub writeErrorLog {
     my $this = shift;
     my ($message, $failStatus,$LogDir) = @_;
-    if ($this->{debug}) {
+    if ($this->{verbose}) {
         print $message;
     }
     $this->{LOG}->print($message);
@@ -83,7 +90,7 @@ sub lookupNextVisitLabel {
     my $query = "SELECT Visit_label FROM session".
                 " WHERE CandID=$CandID".
                 " ORDER BY ID DESC LIMIT 1"; 
-    if ($this->{debug}) {
+    if ($this->{verbose}) {
         print $query . "\n";
     }
     my $sth = $${dbhr}->prepare($query);
@@ -198,7 +205,7 @@ sub createTarchiveArray {
                 " ScannerManufacturer, ScannerModel, ScannerSerialNumber,".
                 " ScannerSoftwareVersion, neurodbCenterName, TarchiveID,".
                 " SourceLocation FROM tarchive WHERE $where";
-    if ($this->{debug}) {
+    if ($this->{verbose}) {
         print $query . "\n";
     }
     my $sth = ${$this->{'dbhr'}}->prepare($query); 
@@ -312,11 +319,11 @@ sub computeMd5Hash {
     my ($file) = @_;
     $this->{LOG}->print(
         "==> computing md5 hash for MINC body.\n"
-    ) if $this->{verbose};
+    );
     my $md5hash = &NeuroDB::MRI::compute_hash(\$file);
     $this->{LOG}->print(
         " --> md5: $md5hash\n"
-    ) if $this->{verbose};
+    );
     $file->setParameter('md5hash', $md5hash);
     my $unique = &NeuroDB::MRI::is_unique_hash(\$file);
     return $unique;
@@ -336,7 +343,7 @@ sub getAcquisitionProtocol {
 
     $this->{LOG}->print(    
         "==> verifying acquisition protocol\n"
-    ) if $this->{verbose};
+    );
     my $acquisitionProtocol =  &NeuroDB::MRI::identify_scan_db(
                                    $center_name,
                                    $subjectIDsref,
@@ -363,7 +370,7 @@ sub getAcquisitionProtocol {
                   );
         $this->{LOG}->print(
             "Worst error: $checks[0]\n"
-        ) if $this->{debug};
+        );
     }
     return ($acquisitionProtocol, $acquisitionProtocolID, @checks);
 }
@@ -390,7 +397,7 @@ sub extra_file_checks() {
                     " CandID, Visit_label, CheckID,  Scan_type,".
                     " Severity, Header, Value, ValidRange,ValidRegex)".
                     " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-    if ($this->{debug}) {
+    if ($this->{verbose}) {
         print $query . "\n";
     }
     my $worst_warning = 0;
@@ -457,7 +464,7 @@ sub update_mri_acquisition_dates {
                 " (m.AcquisitionDate > '$acq_date'". 
                 " OR m.AcquisitionDate IS NULL) AND '$acq_date'>0";
     
-    if ($this->{debug}) {
+    if ($this->{verbose}) {
         print $query . "\n";
     }
 
@@ -493,7 +500,7 @@ sub loadAndCreateObjectFile {
     ############################################################
     $this->{LOG}->print(
         "\n==> Loading file from disk $minc\n"
-    ) if $this->{verbose};
+    );
     $file->loadFileFromDisk($minc);
 
     ############################################################
@@ -501,7 +508,7 @@ sub loadAndCreateObjectFile {
     ############################################################
     $this->{LOG}->print(
         " --> mapping DICOM parameter for $minc\n"
-    ) if $this->{verbose};
+    );
     NeuroDB::MRI::mapDicomParameters(\$file);
     return $file;
 }
@@ -596,7 +603,7 @@ sub registerScanIntoDB {
              $acquisitionProtocolID
         );
         print "Acq protocol: $acquisitionProtocol ID: $acquisitionProtocolID\n"
-        if $this->{debug};
+	;
 
         ########################################################
         # set Date_taken = last modification timestamp ######### 
@@ -643,9 +650,9 @@ sub registerScanIntoDB {
         ########################################################
         # register into the db fixme if I ever want a dry run ## 
         ########################################################
-        print "Registering file into db\n" if $this->{debug};
+        print "Registering file into db\n" if $this->{verbose};
         $fileID = &NeuroDB::MRI::register_db($minc_file);
-        print "FileID: $fileID\n" if $this->{debug}
+        print "FileID: $fileID\n" if $this->{verbose}
 
         ########################################################
         ### update mri_acquisition_dates table #################
@@ -679,7 +686,7 @@ sub dicom_to_minc {
     } else {
         $d2m_cmd .= "dcm2mnc -dname '' -stdin -clobber $this->{TmpDir} ";
     }
-    print "\n" . $d2m_cmd . "\n";
+    print "\n" . $d2m_cmd . "\n" if ($this->{verbose});
     $d2m_log = `$d2m_cmd`;
 
     if ($? > 0) {
@@ -758,7 +765,7 @@ sub concat_mri {
     $cmd = "cat $this->{TmpDir} /concatfilelist.txt | concat_mri.pl ".
            "-maxslicesep 3.1 -compress -postfix _concat -targetdir ".
            "$this->{TmpDir} /concat -stdin";
-    if ($this->{debug}) {
+    if ($this->{verbose}) {
         print $cmd . "\n";
     }
 
@@ -802,7 +809,7 @@ sub moveAndUpdateTarchive {
     my ($tarchive_location,$tarchiveInfo) = @_;
     my $query = '';
     my ($newTarchiveLocation, $newTarchiveFilename,$mvTarchiveCmd);
-    print "Moving tarchive into library\n" if $this->{debug};
+    print "Moving tarchive into library\n" if $this->{verbose};
     $newTarchiveLocation = $Settings::tarchiveLibraryDir."/".
     substr($tarchiveInfo->{'DateAcquired'}, 0, 4);
     ############################################################
@@ -821,7 +828,7 @@ sub moveAndUpdateTarchive {
     ###### move the tarchive ###################################
     ############################################################
     $mvTarchiveCmd = "mv $tarchive_location $newTarchiveLocation";
-    print $mvTarchiveCmd . "\n"  if $this->{debug};
+    print $mvTarchiveCmd . "\n"  if $this->{verbose};
     `$mvTarchiveCmd`;
 
     ############################################################
@@ -836,7 +843,7 @@ sub moveAndUpdateTarchive {
              ${$this->{'dbhr'}}->quote(
                 $tarchiveInfo->{'DicomArchiveID'}
              );
-    print $query . "\n"  if $this->{debug};
+    print $query . "\n"  if $this->{verbose};
     ${$this->{'dbhr'}}->do($query);
     return $newTarchiveLocation;
 }
@@ -883,7 +890,7 @@ sub CreateMRICandidates {
                      ${$this->{'dbhr'}}->quote($centerID). 
                      ", NOW(), NOW(), '$User', 'Human')";
             
-            if ($this->{debug}) {
+            if ($this->{verbose}) {
                 print $query . "\n";
             }
             ${$this->{'dbhr'}}->do($query);
@@ -945,7 +952,7 @@ sub setMRISession {
     ############################################################
     if ($sessionID) {
         $query = "UPDATE session SET Scan_done='Y' WHERE ID=$sessionID";
-        if ($this->{debug}) {
+        if ($this->{verbose}) {
             print $query . "\n";
         }
         ${$this->{'dbhr'}}->do($query);
@@ -962,7 +969,7 @@ sub validateArchive {
     my ($tarchive,$tarchiveInfo) = @_;
     $this->{LOG}->print( "\n==> verifying dicom archive md5sum (checksum)\n");
     my $cmd = "md5sum $tarchive";
-    if ($this->{debug})  {
+    if ($this->{verbose})  {
         print $cmd . "\n";
     }
     my $md5_check = `$cmd`;
@@ -1055,10 +1062,34 @@ sub validateCandidate {
         $CandMismatchError= 'Visit label does not exist';
         return $CandMismatchError;
     } elsif (($sth->rows == 0) && ($subjectIDsref->{'createVisitLabel'})) {
-        print "\n\n => Will create visit label $subjectIDsref->{'visitLabel'}";
+        print "\n\n => Will create visit label $subjectIDsref->{'visitLabel'}"
+	if ($this->{verbose});
     } 
 
    return $CandMismatchError;
+}
+
+################################################################
+#################spool##########################################
+################################################################
+=pod
+spool()
+Description:
+   - Calls the Notify->spool function to log all messages
+
+Arguments:
+ $this      : Reference to the class
+ $message   : Message to be logged in the database
+ $error     : if 'Y' it's an error log , 'N' otherwise
+ Returns    : NULL
+=cut
+
+sub spool  {
+    my $this = shift;
+    my ( $message, $error ) = @_;
+    print "message is $message \n";
+    $this->{'Notify'}->spool('mri upload processing class', $message, 0,
+           'MRIProcessingUtility.pm', $this->{'upload_id'},$error);
 }
 
 1;
