@@ -200,7 +200,7 @@ spool($message,'N');
 ################################################################
 ############### Run DicomTar  ##################################
 ################################################################
-$output = $imaging_upload->runDicomTar();
+$output = $imaging_upload->runDicomTar($profile);
 if ( !$output ) {
     $message = "\n The dicomtar execution has failed";
     spool($message,'Y');

@@ -72,14 +72,17 @@ if ($profile && !@Settings::db) {
 ################################################################
 my $dbh = &NeuroDB::DBI::connect_to_db(@Settings::db);
 my @row=();
-my $query = "SELECT UploadID, UploadLocation FROM mri_upload WHERE Processed=0 AND (TarchiveID IS NULL AND number_of_mincInserted IS NULL)";
+my $query = "SELECT UploadID, UploadLocation FROM mri_upload " .
+	    "WHERE Processed=0 AND ".
+	    "(TarchiveID IS NULL AND number_of_mincInserted IS NULL)";
 print "\n" . $query . "\n";
 my $sth = $dbh->prepare($query);
 $sth->execute();
 while(@row = $sth->fetchrow_array()) { 
 
     if ( -e $row[1] ) {
-	my $command = "imaging_upload_file.pl -upload_id $row[0] -profile prod $row[1]";
+	my $command = "imaging_upload_file.pl -upload_id $row[0] " .
+		      "-profile $profile $row[1]";
 	print "\n" . $command . "\n";
 	my $output = system($command);
     } else {

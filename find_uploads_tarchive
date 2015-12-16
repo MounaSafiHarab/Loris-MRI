@@ -10,7 +10,7 @@ my @studies = ();
 
 my $version        = 0;
 my $noUpdateSwitch = 0;
-my $profile        = "prod";
+my $profile        = undef;
 my $verbose        = 0;
 
 

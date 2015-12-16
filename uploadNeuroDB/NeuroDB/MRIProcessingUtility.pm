@@ -35,7 +35,7 @@ sub new {
     ############################################################
     ############### Create a settings package ##################
     ############################################################
-    my $profile = "prod";
+    my $profile = undef;
     {  
      package Settings; 
      do "$ENV{LORIS_CONFIG}/.loris_mri/$profile";

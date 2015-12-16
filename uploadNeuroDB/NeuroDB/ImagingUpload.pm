@@ -54,6 +54,7 @@ sub new {
     $self->{'pname'}                = $pname;
     $self->{'upload_id'}            = $upload_id;
     $self->{'verbose'}              = $verbose;
+    $self->{'profile'}              = $profile;
     return bless $self, $params;
 }
 
@@ -207,7 +208,7 @@ sub IsValid {
 runDicomTar()
 Description:
  -Extracts tarchiveID using pname
- -Runs dicomTar.pl with -clobber -database -profile prod options
+ -Runs dicomTar.pl with -clobber -database -profile $profile options
  -If successfull it updates MRI_upload table accordingly
 
 Arguments:
@@ -261,7 +262,7 @@ sub runDicomTar {
 getTarchiveFileLocation()
 Description:
  -Extracts tarchiveID using pname
- -Runs dicomTar.pl with clobber -database -profile prod options
+ -Runs dicomTar.pl with clobber -database -profile $profile options
  -If successfull it updates MRI_upload Table accordingly
 
 Arguments:
@@ -293,7 +294,7 @@ sub getTarchiveFileLocation {
 =pod
  runTarchiveLoader()
 Description:
- -Runs tarchiveLoader with clobber -profile prod option
+ -Runs tarchiveLoader with clobber -profile $profile option
  -If successfull it updates MRI_upload Table accordingly
 
 Arguments:
