@@ -17,6 +17,7 @@ my $notify_detailed   = 'Y'; # notification_spool message flag for messages to b
 my $notify_notsummary = 'N'; # notification_spool message flag for messages to be displayed 
                              # with SUMMARY Option in the front-end/imaging_uploader 
 
+my $useScanner   = 0;   #do NOT use scanner information by default when getting center name 
 ################################################################
 #####################Constructor ###############################
 ################################################################
@@ -256,10 +257,12 @@ sub determinePSC {
     my $tarchive_srcloc = $tarchiveInfo->{'SourceLocation'};
     my $upload_id = undef;
     $to_log = 1 unless defined $to_log;
+    $useScanner = $Settings::useScannerInfo if defined $Settings::useScannerInfo;
     my ($center_name, $centerID) =
     NeuroDB::MRI::getPSC(
-        $tarchiveInfo->{$Settings::lookupCenterNameUsing},
-        $this->{dbhr}
+        $tarchiveInfo->{&Settings::lookupCenterName},
+        $this->{dbhr},
+	$useScanner
     );
     if ($to_log) {
 	$upload_id = getUploadIDUsingTarchiveSrcLoc($tarchive_srcloc);

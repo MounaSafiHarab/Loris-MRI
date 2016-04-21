@@ -452,7 +452,7 @@ sub identify_scan_db {
     
     my $query = "SELECT ID FROM mri_scanner WHERE Manufacturer='$manufacturer' AND Model='$model' AND Serial_number='$serial_number' AND Software='$software'";
     
-    
+
     my $sth = $${dbhr}->prepare($query);
     $sth->execute();
     
@@ -463,7 +463,7 @@ sub identify_scan_db {
         $ScannerID=$results[0];
     }
 
-    
+   
     # get the list of protocols for a site their scanner and subproject
     $query = "SELECT Scan_type, ScannerID, Center_name, TR_range, TE_range, TI_range, slice_thickness_range, xspace_range, yspace_range, zspace_range,
               xstep_range, ystep_range, zstep_range, time_range, series_description_regex
@@ -976,7 +976,9 @@ Returns: two element array: first is UNKN or the MRI alias of the PSC, second is
 =cut
 
 sub getPSC {
-    my ($patientName, $dbhr) = @_;
+    my ($patientName, $dbhr, $useScanner) = @_;
+
+if (! $useScanner) { # useScanner = 0 from prod file
     my $query = "SELECT CenterID, Alias, MRI_alias FROM psc WHERE mri_alias<>''";
     my $sth = $${dbhr}->prepare($query);
     $sth->execute;
@@ -1005,6 +1007,39 @@ sub getPSC {
 	    return ($row->{'MRI_alias'},$row->{'CenterID'});
 	}
     }  
+}
+# Scanner was selected to get the psc, so get Center_name form mri_protocol
+# for that ScannerID, then use it to get MRI_alias and CenterID from psc  
+else { # useScanner = 1 from prod file
+    my $CenterName = '';
+    my $ScannerID = '';
+    my $query = "SELECT s.ID FROM mri_scanner s ".
+                "WHERE s.Serial_number = $patientName ";
+    my $sth = $${dbhr}->prepare($query);
+    $sth->execute();
+    if ( $sth->rows > 0) {
+        my $row = $sth->fetchrow_hashref();
+        $ScannerID = $row->{'ID'};
+        }
+
+    my $query = "SELECT p.Center_name FROM mri_protocol p ". 
+	        "WHERE p.ScannerID = $ScannerID LIMIT 1";
+    my $sth = $${dbhr}->prepare($query);
+    $sth->execute();
+    if ( $sth->rows > 0) {
+        my $row = $sth->fetchrow_hashref();
+        $CenterName = $row->{'Center_name'};
+        }
+    my $where = "WHERE p.Name LIKE '%". $CenterName . "%'";
+    $query = "SELECT p.Alias,p.MRI_alias ".
+	     "FROM psc p $where ";
+    $sth = $${dbhr}->prepare($query);
+    $sth->execute();
+    if ( $sth->rows > 0) {
+        $row = $sth->fetchrow_hashref();
+	return ($row->{'Alias'},$row->{'MRI_alias'});
+	}
+    }
 
     return ("UNKN", 0);
 }
