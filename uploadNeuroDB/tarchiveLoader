@@ -491,7 +491,7 @@ foreach my $file (@files) {
        $base = basename($file);
        $fullpath = $data_dir . "/" . $file;
        print "Minc file is: $file; and minc_base is $base and Minc Full Path is: $fullpath \n" if $verbose;
-       if ($base =~ /t2/i or $base =~ /t1/i ) {
+       if ($base =~ /t2/i or $base =~ /t1/i or $base =~ /pd/i) {
            my $cmd = "noise_estimate --snr $fullpath";
            my $SNR = `$cmd`;
            print "$cmd \n" if $verbose;
@@ -515,6 +515,27 @@ foreach my $file (@files) {
 
             ###################################################
                 ######## END OF SNR FUNCTION  #############
+            ###################################################
+
+my $model_dir = '/data/loris-MRI/data/ipl/quarantine/models/icbm152_model_09c';
+my $model = 'mni_icbm152_t1_tal_nlin_sym_09c';
+my $beastlib = '/data/loris-MRI/data/ipl/quarantine/models/beast';
+my @parts = split (/\./,$base);
+pop @parts;
+my $output_base = join '.', @parts;
+my ($name,$dir, $suffix) = fileparse($fullpath);
+$output_base = $dir . $output_base;
+print $output_base . "\n";
+
+my $cmd = "deface_minipipe.pl $fullpath $output_base --model-dir $model_dir --model $model --beastlib $beastlib";
+if ($verbose) {
+    $cmd .= " --verbose";
+}
+`$cmd`;
+print "Currently Defacing $fullpath \n";
+
+            ###################################################
+                ######## END OF DEFACING FUNCTION  #########
             ###################################################
 
 if ($valid_study) {
