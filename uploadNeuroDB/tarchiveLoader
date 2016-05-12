@@ -426,6 +426,7 @@ foreach my $minc (@minc_files) {
 
     $script = "minc_insertion.pl -tarchivePath $tarchive ".
               "-mincPath $minc -profile $profile";
+
     if ($force) {
         $script .= " -force";
     }
@@ -463,6 +464,58 @@ foreach my $minc (@minc_files) {
        $valid_study = 1;
     }
 } # end foreach $minc
+
+
+    ###########################################################
+        ########### If t1 or t2, get the SNR ##############
+    ###########################################################
+my $where = "WHERE f.TarchiveSource=?";
+$query = "SELECT file from files f ";
+$query = $query . $where;
+if ($debug) {
+    print $query . "\n";
+}
+
+my $minc_file_arr = $dbh->prepare($query);
+$minc_file_arr->execute($tarchiveInfo{TarchiveID});
+my @files = $minc_file_arr->fetchrow_array();
+
+print $query . "\n";
+print $tarchiveInfo{TarchiveID} . "\n";
+print  join("\n",@files),"\n";
+
+my $base = ();
+my $fullpath = ();
+foreach my $file (@files) {
+#for my $i (0 .. $#minc_file_arr) {
+       $base = basename($file);
+       $fullpath = $data_dir . "/" . $file;
+       print "Minc file is: $file; and minc_base is $base and Minc Full Path is: $fullpath \n" if $verbose;
+       if ($base =~ /t2/i or $base =~ /t1/i ) {
+           my $cmd = "noise_estimate --snr $fullpath";
+           my $SNR = `$cmd`;
+           print "$cmd \n" if $verbose;
+           print "SNR is: $SNR \n" if $verbose;
+
+            ###################################################
+                ### Update the SNR in files table #############
+            ###################################################
+
+            $where = "WHERE File=?";
+            $query = "UPDATE files SET SNR=?";
+            $query = $query . $where;
+            if ($debug) {
+                print $query . "\n";
+            }
+ 
+            my $files_SNR_update = $dbh->prepare($query);
+            $files_SNR_update->execute($SNR, $file);
+        }
+}
+
+            ###################################################
+                ######## END OF SNR FUNCTION  #############
+            ###################################################
 
 if ($valid_study) {
 
