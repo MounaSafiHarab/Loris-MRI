@@ -50,6 +50,16 @@ $VERSION = 0.2;
 @EXPORT = qw();
 @EXPORT_OK = qw(identify_scan in_range get_headers get_info get_ids get_objective identify_scan_db scan_type_text_to_id scan_type_id_to_text register_db get_header_hash get_scanner_id get_psc compute_hash is_unique_hash make_pics select_volume);
 
+############################################################
+############### Create a settings package ##################
+############################################################
+my $profile = "prod";
+{
+ package Settings;
+ do "$ENV{LORIS_CONFIG}/.loris_mri/$profile";
+}
+
+
 =pod
 B<getSubjectIDs( C<$patientName>, C<$scannerID>, C<$dbhr> )>
 Determines the cand id and visit label for the subject based on patient name and (for calibration data) scannerid.
@@ -888,7 +898,7 @@ Returns: (int) scannerID
 =cut
 
 sub findScannerID {
-    my ($manufacturer, $model, $serialNumber, $softwareVersion, $centerID, $dbhr, $register_new) = @_;
+    my ($manufacturer, $model, $serialNumber, $softwareVersion, $centerID, $dbhr, $register_new, $patientname) = @_;
 
     my $scanner_id = 0;
 
@@ -899,9 +909,47 @@ sub findScannerID {
     @results = $sth->fetchrow_array();
     $scanner_id = $results[0] if $results[0];
 
+    #### If the scanner was registered with a certain PSCID, for example'scanner' 
+    #### and we decided to change that in the study in $profile, 
+    #### then we have to update the candidate table
+    if ($scanner_id) {
+        my $candID_fromMRIScanner = 'NULL';
+        my $pscID_fromCandidate = 'NULL';
+        my $subjectIDsref = &Settings::getSubjectIDs($patientname, $patientname, null, $dbhr);
+        my $pscID_fromProfile = $subjectIDsref->{'PSCID'};
+
+        # find the CandID associated with this serial number
+        $query = "SELECT CandID FROM mri_scanner WHERE Serial_number=".$${dbhr}->quote($serialNumber)." LIMIT 1";
+        $sth = $${dbhr}->prepare($query);
+        $sth->execute();
+        if($sth->rows > 0) {
+            my @row = $sth->fetchrow_array();
+            $candID_fromMRIScanner = $row[0];
+        }
+        $sth->finish();
+
+        # find the PSCID for that candidate, and compare to the PSCID in the $profile file
+        $query = "SELECT PSCID FROM candidate WHERE CandID=".$${dbhr}->quote($candID_fromMRIScanner);
+        $sth = $${dbhr}->prepare($query);
+        $sth->execute();
+        if($sth->rows > 0) {
+            my @row = $sth->fetchrow_array();
+            $pscID_fromCandidate = $row[0];
+        }
+        $sth->finish();
+
+        # update the 'scanner' PSCID candidate to be the new PSCID from $profile, 
+	# otherwise the next steps in the insertion when validating candidate will fail
+        if($pscID_fromCandidate ne $pscID_fromProfile) {
+            $query = "UPDATE candidate SET PSCID='" . $pscID_fromProfile . "', CenterID=$centerID, Date_active=NOW(), Date_registered=NOW(), UserID='NeuroDB::MRI', Entity_type = 'Scanner' WHERE CandID=$candID_fromMRIScanner";
+	    $${dbhr}->do($query);
+        }	
+    }
+
     # only register new scanners when told to do so !!!
-    if ($register_new) { $scanner_id = registerScanner($manufacturer, $model, $serialNumber, $softwareVersion, $centerID, $dbhr) unless $scanner_id };
-    
+    else {
+        if ($register_new) { $scanner_id = registerScanner($manufacturer, $model, $serialNumber, $softwareVersion, $centerID, $dbhr, $pscID_fromProfile) };
+    }    
     return $scanner_id;
 }
 
@@ -918,7 +966,7 @@ Returns: (int) scannerID
 =cut
 
 sub registerScanner {
-    my ($manufacturer, $model, $serialNumber, $softwareVersion, $centerID, $dbhr) = @_;
+    my ($manufacturer, $model, $serialNumber, $softwareVersion, $centerID, $dbhr, $pscid_formProfile) = @_;
     # my $scanner_id = 0;
     my @results = ();
     my $dbh = $$dbhr;
@@ -937,7 +985,7 @@ sub registerScanner {
     # create a new candidate for the scanner if it does not exist.
     if(!defined($candID) || ($candID eq 'NULL')) {
 	$candID = createNewCandID($dbhr);
-	$query = "INSERT INTO candidate (CandID, PSCID, CenterID, Date_active, Date_registered, UserID, Entity_type) VALUES ($candID, 'scanner', $centerID, NOW(), NOW(), 'NeuroDB::MRI', 'Scanner')";
+	$query = "INSERT INTO candidate (CandID, PSCID, CenterID, Date_active, Date_registered, UserID, Entity_type) VALUES ($candID, '" . $pscid_fromProfile . "', $centerID, NOW(), NOW(), 'NeuroDB::MRI', 'Scanner')";
 	$dbh->do($query);
     }	
     # register scanner as new
@@ -1205,6 +1253,41 @@ sub make_nii {
 
     # update mri table (parameter_file table)
     $file->setParameter('check_nii_filename', $nifti);
+}
+
+=pod
+Creates pics associated with MINC files
+=cut
+sub make_minc_pics {
+    my ($dbhr, $TarchiveSource, $profile, $minFileID, $debug, $verbose) = @_;
+    my $where = "WHERE TarchiveSource = ? ";
+    my $query = "SELECT Min(FileID) AS min, Max(FileID) as max FROM files ";
+    $query    = $query . $where;
+    if ($debug) {		
+        print $query . "\n";		
+    }
+    my $sth   = $${dbhr}->prepare($query);
+    $sth->execute($TarchiveSource);
+    print "TarchiveSource is " . $TarchiveSource . "\n";
+
+    my $script = undef;
+    my $output = undef;
+    my @row = $sth->fetchrow_array();
+    if (@row) {
+        $script = "mass_pic.pl -minFileID $row[$minFileID] -maxFileID $row[1] ".
+                     "-profile $profile";
+        if ($verbose) {		
+            $script .= " -verbose";		
+	}
+
+        ############################################################
+        ## Note: system call returns the process ID ################
+        ## To get the actual exit value, shift right by eight as ###
+        ## done below ##############################################
+        ############################################################
+        $output = system($script);
+        $output = $output >> 8;
+    }
 }
 
 =pod

@@ -306,7 +306,8 @@ sub determineScannerID {
             $tarchiveInfo->{'ScannerSoftwareVersion'},
             $centerID,
             $this->{dbhr},
-            $NewScanner 
+            $NewScanner, 
+	    $tarchiveInfo->{'PatientName'} 
         );
     if ($scannerID == 0) {
         if ($to_log) {
