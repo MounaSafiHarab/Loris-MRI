@@ -306,7 +306,8 @@ sub determineScannerID {
             $tarchiveInfo->{'ScannerSoftwareVersion'},
             $centerID,
             $this->{dbhr},
-            $NewScanner 
+            $NewScanner,
+	    $tarchiveInfo->{'PatientName'}  
         );
     if ($scannerID == 0) {
         if ($to_log) {
@@ -369,7 +370,7 @@ sub computeMd5Hash {
 sub getAcquisitionProtocol {
    
     my $this = shift;
-    my ($file,$subjectIDsref,$tarchiveInfo,$center_name,$minc,$acquisitionProtocol,$bypass_extra_file_checks) = @_;
+    my ($file,$subjectIDsref,$tarchiveInfo,$center_name,$minc) = @_;
     my $tarchive_srcloc = $tarchiveInfo->{'SourceLocation'};
     my $upload_id = getUploadIDUsingTarchiveSrcLoc($tarchive_srcloc);
     my $message = '';
@@ -378,20 +379,17 @@ sub getAcquisitionProtocol {
     ## get acquisition protocol (identify the volume) ##########
     ############################################################
 
-    if(!defined($acquisitionProtocol)) {
-      $message = "\n==> verifying acquisition protocol\n";
-      $this->{LOG}->print($message);
-      $this->spool($message, 'N', $upload_id, $notify_detailed);
+    $message = "\n==> verifying acquisition protocol\n";
+    $this->{LOG}->print($message);
+    $this->spool($message, 'N', $upload_id, $notify_detailed);
 
-      $acquisitionProtocol =  &NeuroDB::MRI::identify_scan_db(
+    my $acquisitionProtocol =  &NeuroDB::MRI::identify_scan_db(
                                    $center_name,
                                    $subjectIDsref,
                                    $file, 
                                    $this->{dbhr}, 
                                    $minc
-                                 );
-    }
-
+                               );
     $message = "\nAcquisition protocol is $acquisitionProtocol\n";
     $this->{LOG}->print($message);
     $this->spool($message, 'N', $upload_id, $notify_detailed);
@@ -403,9 +401,7 @@ sub getAcquisitionProtocol {
         &NeuroDB::MRI::scan_type_text_to_id(
           $acquisitionProtocol, $this->{dbhr}
         );
-
-        if ($bypass_extra_file_checks == 0) {
-          @checks = $this->extra_file_checks(
+        @checks = $this->extra_file_checks(
                         $acquisitionProtocolID, 
                         $file, 
                         $subjectIDsref->{'CandID'}, 
@@ -1108,6 +1104,12 @@ sub validateCandidate {
     my $this = shift;
     my ($subjectIDsref, $tarchive_srcloc)= @_;
     my $CandMismatchError = undef;
+#    my $phantoms_frontend = $Settings::phantoms_frontend;
+    my $phantoms_frontend =
+    NeuroDB::DBI::getConfigSetting(
+        $this->{dbhr},
+        'PhantomsFrontEndInsertion'
+    );
     
     ############################################################
     ################## Check if CandID exists ##################
@@ -1142,8 +1144,9 @@ sub validateCandidate {
     
     ############################################################
     ################ No Checking if the subject is Phantom #####
+    ################ NOT inserted from the front-end ###########
     ############################################################
-    if ($subjectIDsref->{'isPhantom'}) {
+    if (($subjectIDsref->{'isPhantom'}) && !$phantoms_frontend) {
         # CandID/PSCID errors don't apply to phantoms, so we don't
         # want to trigger
         # the check which aborts the insertion

@@ -83,6 +83,12 @@ Arguments:
 sub IsCandidateInfoValid {
     my $this = shift;
     my ($message,$query,$where) = '';
+#    my $phantoms_frontend = $Settings::phantoms_frontend;
+    my $phantoms_frontend =
+    NeuroDB::DBI::getConfigSetting(
+        $this->{dbhr},
+        'PhantomsFrontEndInsertion'
+    );
     ############################################################
     ####Set the Inserting flag to true##########################
     #Which means that the scan is going through the pipeline####
@@ -194,9 +200,11 @@ sub IsCandidateInfoValid {
 	    else {
          #######################################################
          #Validate the Patient-Name, only if it's not a phantom#
+         # OR a phantom that was registered from the front end #
          ############## and the file is of type DICOM###########
          #######################################################
-                if ($row[4] eq 'N') {
+                if (($row[4] eq 'N') || 
+		    (($row[4] eq 'Y') && $phantoms_frontend)) {
                     if ( !$this->PatientNameMatch($_) ) {
                             $files_with_unmatched_patient_name++;
                     }

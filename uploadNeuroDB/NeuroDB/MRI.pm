@@ -50,6 +50,16 @@ $VERSION = 0.2;
 @EXPORT = qw();
 @EXPORT_OK = qw(identify_scan in_range get_headers get_info get_ids get_objective identify_scan_db scan_type_text_to_id scan_type_id_to_text register_db get_header_hash get_scanner_id get_psc compute_hash is_unique_hash make_pics select_volume);
 
+############################################################
+############### Create a settings package ##################
+############################################################
+my $profile = "prod";
+{
+ package Settings;
+ do "$ENV{LORIS_CONFIG}/.loris_mri/$profile";
+}
+
+
 =pod
 B<getSubjectIDs( C<$patientName>, C<$scannerID>, C<$dbhr> )>
 Determines the cand id and visit label for the subject based on patient name and (for calibration data) scannerid.
@@ -888,9 +898,16 @@ Returns: (int) scannerID
 =cut
 
 sub findScannerID {
-    my ($manufacturer, $model, $serialNumber, $softwareVersion, $centerID, $dbhr, $register_new) = @_;
+    my ($manufacturer, $model, $serialNumber, $softwareVersion, $centerID, $dbhr, $register_new, $patientname) = @_;
 
     my $scanner_id = 0;
+
+#    my $phantoms_frontend = $Settings::phantoms_frontend;
+    my $phantoms_frontend =
+    NeuroDB::DBI::getConfigSetting(
+        $dbhr,
+        'PhantomsFrontEndInsertion'
+    );
 
     my @results = ();
     my $query = "SELECT ID FROM mri_scanner WHERE Manufacturer=".$${dbhr}->quote($manufacturer)." AND Model=".$${dbhr}->quote($model)." AND Software=".$${dbhr}->quote($softwareVersion)." AND Serial_number=".$${dbhr}->quote($serialNumber);
@@ -899,9 +916,33 @@ sub findScannerID {
     @results = $sth->fetchrow_array();
     $scanner_id = $results[0] if $results[0];
 
+    my $subjectIDsref = &Settings::getSubjectIDs($patientname, $patientname, $scanner_id, $dbhr);
+    my $candID_fromProfile = $subjectIDsref->{'CandID'};
+
+    #### If the scanner was registered and the phantom candidate was registered from the front end 
+    #### update the candidate table with the $scannerID
+    #### then we have to update the candidate table
+    if ($scanner_id) {
+	    if ($phantoms_frontend) {
+
+                # find the CandID associated with this serial number
+                $query = "SELECT CandID FROM mri_scanner WHERE Serial_number=".$${dbhr}->quote($serialNumber)." LIMIT 1";
+                $sth = $${dbhr}->prepare($query);
+                $sth->execute();
+                if($sth->rows > 0) {
+                    my @row = $sth->fetchrow_array();
+                    $scannerID = $row[0];
+                }
+                $sth->finish();
+
+                $query = "UPDATE candidate SET ScannerID=$scannerID WHERE CandID=$candID_fromProfile";
+	        $${dbhr}->do($query);
+        }
+    }
     # only register new scanners when told to do so !!!
-    if ($register_new) { $scanner_id = registerScanner($manufacturer, $model, $serialNumber, $softwareVersion, $centerID, $dbhr) unless $scanner_id };
-    
+    else {
+        if ($register_new) { $scanner_id = registerScanner($manufacturer, $model, $serialNumber, $softwareVersion, $centerID, $dbhr, $patientname) };
+    }    
     return $scanner_id;
 }
 
@@ -918,11 +959,16 @@ Returns: (int) scannerID
 =cut
 
 sub registerScanner {
-    my ($manufacturer, $model, $serialNumber, $softwareVersion, $centerID, $dbhr) = @_;
+    my ($manufacturer, $model, $serialNumber, $softwareVersion, $centerID, $dbhr, $patientname) = @_;
     # my $scanner_id = 0;
     my @results = ();
     my $dbh = $$dbhr;
-    my $candID = 'NULL';
+    my $scannerID = 'NULL';
+    my $candID_fromMRIScanner = 'NULL';
+    my $subjectIDsref = &Settings::getSubjectIDs($patientname, $patientname, null, $dbhr);
+    my $pscID_fromProfile = $subjectIDsref->{'PSCID'};
+    my $candID_fromProfile = $subjectIDsref->{'CandID'};
+    my $phantoms_frontend = $Settings::phantoms_frontend;
 
     # find the CandID associated with this serial number
     my $query = "SELECT CandID FROM mri_scanner WHERE Serial_number=".$dbh->quote($serialNumber)." LIMIT 1";
@@ -930,19 +976,27 @@ sub registerScanner {
     $sth->execute();
     if($sth->rows > 0) {
         my @row = $sth->fetchrow_array();
-        $candID = $row[0];
+        $scannerID = $row[0];
     }
     $sth->finish();
 
     # create a new candidate for the scanner if it does not exist.
-    if(!defined($candID) || ($candID eq 'NULL')) {
-	$candID = createNewCandID($dbhr);
-	$query = "INSERT INTO candidate (CandID, PSCID, CenterID, Date_active, Date_registered, UserID, Entity_type) VALUES ($candID, 'scanner', $centerID, NOW(), NOW(), 'NeuroDB::MRI', 'Scanner')";
+    if(!defined($scannerID) || ($scannerID eq 'NULL')) {
+	$scannerID = createNewCandID($dbhr);
+	if (!$phantoms_frontend) {
+print "in first loop\n";
+print "$scannerID\n";
+       	    $query = "INSERT INTO candidate (CandID, PSCID, CenterID, Date_active, Date_registered, UserID, Entity_type) VALUES ($scannerID, 'scanner', $centerID, NOW(), NOW(), 'NeuroDB::MRI', 'Scanner')";
+print "$query \n";
+	} else {
+print "in other loop\n";
+	    $query = "INSERT INTO candidate (ScannerID) VALUES ($scannerID)";
+	}
 	$dbh->do($query);
     }	
     # register scanner as new
     $query = "INSERT INTO mri_scanner (Manufacturer, Model, Serial_number, Software, CandID) VALUES (".$dbh->quote($manufacturer).",".$dbh->quote($model).","
-              .$dbh->quote($serialNumber).",".$dbh->quote($softwareVersion).",".$dbh->quote($candID).")";
+              .$dbh->quote($serialNumber).",".$dbh->quote($softwareVersion).",".$dbh->quote($scannerID).")";
     $dbh->do($query);
     # get id of scanner
     return $dbh->{'mysql_insertid'};
