@@ -968,7 +968,12 @@ sub registerScanner {
     my $subjectIDsref = &Settings::getSubjectIDs($patientname, $patientname, null, $dbhr);
     my $pscID_fromProfile = $subjectIDsref->{'PSCID'};
     my $candID_fromProfile = $subjectIDsref->{'CandID'};
-    my $phantoms_frontend = $Settings::phantoms_frontend;
+    # my $phantoms_frontend = $Settings::phantoms_frontend;
+    my $phantoms_frontend =
+    NeuroDB::DBI::getConfigSetting(
+        $dbhr,
+        'PhantomsFrontEndInsertion'
+    );
 
     # find the CandID associated with this serial number
     my $query = "SELECT CandID FROM mri_scanner WHERE Serial_number=".$dbh->quote($serialNumber)." LIMIT 1";
