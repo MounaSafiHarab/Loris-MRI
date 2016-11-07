@@ -1183,7 +1183,7 @@ sub validateCandidate {
         $CandMismatchError= 'PSCID does not exist';
         return $CandMismatchError;
     } 
-    
+=pod
     ############################################################
     ################ No Checking if the subject is Phantom #####
     ############################################################
@@ -1194,7 +1194,7 @@ sub validateCandidate {
         $CandMismatchError = undef;
         return $CandMismatchError;
     }
-
+=cut
     ############################################################
     ################ Check if visitLabel exists ################
     ############################################################
