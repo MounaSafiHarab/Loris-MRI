@@ -1011,8 +1011,6 @@ sub getPSC {
     my $subjectIDsref = &Settings::getSubjectIDs($patientName, $patientName, null, $dbhr);
     my $candID = $subjectIDsref->{'CandID'};
     my $visitLabel = $subjectIDsref->{'visitLabel'};
-print "PN is: $patientName \n";
-print "Visit label is: $visitLabel \n";
     if ($candID && $visitLabel) {
         ##Get the CenterID using PSCID
 	    $query = "SELECT s.CenterID,p.MRI_alias FROM session s JOIN
@@ -1023,7 +1021,6 @@ print "Visit label is: $visitLabel \n";
 	    $sth->execute();
 	    if ( $sth->rows > 0) {
             my $row = $sth->fetchrow_hashref();
-print "CenterID is: $row->{'CenterID'} \n";
 	        return ($row->{'MRI_alias'},$row->{'CenterID'});
 	    }
     }  
