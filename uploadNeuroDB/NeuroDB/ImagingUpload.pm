@@ -83,6 +83,12 @@ Arguments:
 sub IsCandidateInfoValid {
     my $this = shift;
     my ($message,$query,$where) = '';
+    my $phantNameLikeCand =
+        NeuroDB::DBI::getConfigSetting(
+        $this->{dbhr},
+        'PhantNameLikeCand'
+        );
+
     ############################################################
     ####Set the Inserting flag to true##########################
     #Which means that the scan is going through the pipeline####
@@ -196,11 +202,12 @@ sub IsCandidateInfoValid {
          #Validate the Patient-Name, only if it's not a phantom#
          ############## and the file is of type DICOM###########
          #######################################################
-              #  if ($row[4] eq 'N') {
+                if (($row[4] eq 'N') || 
+                   (($row[4] eq 'Y') && $phantNameLikeCand)) {
                     if ( !$this->PatientNameMatch($_) ) {
                             $files_with_unmatched_patient_name++;
                     }
-             #   }
+                }
             }
         }
     }

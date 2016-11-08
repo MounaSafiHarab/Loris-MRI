@@ -1154,7 +1154,11 @@ sub validateCandidate {
     my $this = shift;
     my ($subjectIDsref, $tarchive_srcloc)= @_;
     my $CandMismatchError = undef;
-    
+    my $phantNameLikeCand =
+        NeuroDB::DBI::getConfigSetting(
+        $this->{dbhr},
+        'PhantNameLikeCand'
+        );    
     ############################################################
     ################## Check if CandID exists ##################
     ############################################################
@@ -1183,18 +1187,18 @@ sub validateCandidate {
         $CandMismatchError= 'PSCID does not exist';
         return $CandMismatchError;
     } 
-=pod
+
     ############################################################
     ################ No Checking if the subject is Phantom #####
     ############################################################
-    if ($subjectIDsref->{'isPhantom'}) {
+    if ($subjectIDsref->{'isPhantom'} && !$phantNameLikeCand) {
         # CandID/PSCID errors don't apply to phantoms, so we don't
         # want to trigger
         # the check which aborts the insertion
         $CandMismatchError = undef;
         return $CandMismatchError;
     }
-=cut
+
     ############################################################
     ################ Check if visitLabel exists ################
     ############################################################
