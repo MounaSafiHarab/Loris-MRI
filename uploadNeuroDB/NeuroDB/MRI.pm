@@ -1004,7 +1004,7 @@ sub getPSC {
     }
 
     ###########################################################################	
-    ###Get the centerID using the PSCID########################################
+    ###Get the centerID using the session table ###############################
     ###########################################################################
 
     #extract the candID and visitLabel from $patientName
