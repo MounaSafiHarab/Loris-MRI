@@ -49,6 +49,16 @@ $VERSION = 0.2;
 
 @EXPORT = qw();
 @EXPORT_OK = qw(identify_scan in_range get_headers get_info get_ids get_objective identify_scan_db scan_type_text_to_id scan_type_id_to_text register_db get_header_hash get_scanner_id get_psc compute_hash is_unique_hash make_pics select_volume);
+ 
+############################################################
+############### Create a settings package ##################
+############################################################
+my $profile = "prod";
+{
+ package Settings;
+ do "$ENV{LORIS_CONFIG}/.loris_mri/$profile";
+}
+
 
 =pod
 B<getSubjectIDs( C<$patientName>, C<$scannerID>, C<$dbhr> )>
@@ -997,6 +1007,7 @@ sub getPSC {
     ###Get the centerID using the PSCID########################################
     ###########################################################################
 
+=pod
     #extract the PSCID from $patientName
     $subjectIDsref = getSubjectIDs($patientName,null,$dbhr);
     my $PSCID = $subjectIDsref->{'PSCID'};
@@ -1004,6 +1015,16 @@ sub getPSC {
     ##Get the CenterID using PSCID
 	$query = "SELECT c.CenterID,p.MRI_alias FROM candidate c JOIN
 	psc p on p.CenterID=c.CenterID  WHERE c.PSCID = '$PSCID'";
+=cut
+    #extract the candID and visitLabel from $patientName
+    my $subjectIDsref = &Settings::getSubjectIDs($patientName, $patientName, null, $dbhr);
+    my $candID = $subjectIDsref->{'CandID'};
+    my $visitLabel = $subjectIDsref->{'visitLabel'};
+    if ($candID && $visitLabel) {
+        ##Get the CenterID using PSCID
+       $query = "SELECT s.CenterID,p.MRI_alias FROM session s JOIN
+       psc p on p.CenterID=s.CenterID  WHERE s.CandID = '$candID'
+        AND s.Visit_label='$visitLabel'";
 
         $sth = $${dbhr}->prepare($query);
 	$sth->execute();
