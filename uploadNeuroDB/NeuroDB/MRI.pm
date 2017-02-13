@@ -418,6 +418,7 @@ sub identify_scan_db {
     my $slice_thickness = ${fileref}->getParameter('slice_thickness');
     my $seriesUID = ${fileref}->getParameter('series_instance_uid');
     my $series_description = ${fileref}->getParameter('series_description');
+    my $bvalues = ${fileref}->getParameter('acquisition:bvalues');
     
     # get parameters specific to MRIs
     my ($tr, $te, $ti, $time);
@@ -466,7 +467,7 @@ sub identify_scan_db {
     
     # get the list of protocols for a site their scanner and subproject
     $query = "SELECT Scan_type, ScannerID, Center_name, TR_range, TE_range, TI_range, slice_thickness_range, xspace_range, yspace_range, zspace_range,
-              xstep_range, ystep_range, zstep_range, time_range, series_description_regex
+              xstep_range, ystep_range, zstep_range, time_range, b_values, series_description_regex
               FROM mri_protocol
               WHERE
              (Center_name='$psc' AND ScannerID='$ScannerID')
@@ -497,6 +498,7 @@ sub identify_scan_db {
             print &in_range($ystep, $rowref->{'ystep_range'}) ? "ystep\t" : '';
             print &in_range($zstep, $rowref->{'zstep_range'}) ? "zstep\t" : '';
             print &in_range($time, $rowref->{'time_range'}) ? "time\t" : '';
+            print &in_range($bvalues, $rowref->{'b_values'}) ? "bvalues\t" : '';
             print "\n";
         }
         
@@ -518,7 +520,8 @@ sub identify_scan_db {
                 && (!$rowref->{'xstep_range'} || &in_range($xstep, $rowref->{'xstep_range'}))
                 && (!$rowref->{'ystep_range'} || &in_range($ystep, $rowref->{'ystep_range'}))
                 && (!$rowref->{'zstep_range'} || &in_range($zstep, $rowref->{'zstep_range'}))
-                && (!$rowref->{'time_range'} || &in_range($time, $rowref->{'time_range'}))) {
+                && (!$rowref->{'time_range'} || &in_range($time, $rowref->{'time_range'}))
+                && (!$rowref->{'b_values'} || $bvalues eq $rowref->{'b_values'})) {
                     return &scan_type_id_to_text($rowref->{'Scan_type'}, $dbhr);
             }
         }
