@@ -200,6 +200,7 @@ sub extractAndParseTarchive {
     my ($tarchive, $tarchive_srcloc, $seriesuid) = @_;
     # get the upload_id from the tarchive_srcloc to pass to notification_spool
     my $upload_id = getUploadIDUsingTarchiveSrcLoc($tarchive_srcloc);
+    print "Tarchive is: " . $tarchive . "\n";
     my $study_dir = $this->{TmpDir}  . "/" .
         $this->extract_tarchive($tarchive, $tarchive_srcloc, $seriesuid);
     my $ExtractSuffix  = basename($tarchive, ".tar");
@@ -790,6 +791,7 @@ sub dicom_to_minc {
     my ($d2m_cmd,$d2m_log,$exit_code);
     my $message = '';
     my $upload_id = getUploadIDUsingTarchiveSrcLoc($tarchive_srcloc);
+    print "Study dir: " . $study_dir . "\n";
     $d2m_cmd = "find $study_dir -type f | $get_dicom_info -studyuid -series".
                " -echo -image -file -series_descr -attvalue 0018 0024".
                " -stdin | sort -n -k1 -k2 -k6 -k3 -k7 -k4 | grep -iv".

@@ -308,18 +308,26 @@ Arguments:
 sub getTarchiveFileLocation {
     my $this             = shift;
     my $archive_location = '';
+    my $archive_locations = '';
     my $query            = "SELECT t.ArchiveLocation FROM tarchive t "
                            . " WHERE t.SourceLocation =?";
     my $sth              = ${ $this->{'dbhr'} }->prepare($query);
     $sth->execute( $this->{'uploaded_temp_folder'} );
-    if ( $sth->rows > 0 ) {
-        $archive_location = $sth->fetchrow_array();
-    }
+    my $test = $sth->rows;
 
-    unless ($archive_location =~ m/$Settings::tarchiveLibraryDir/i) {
-        $archive_location = ($Settings::tarchiveLibraryDir . "/" . $archive_location);
+    if ( $sth->rows > 0 ) {
+        while (my $row = $sth->fetchrow_hashref()) {
+            my $archive_location = $row->{'ArchiveLocation'};
+            unless ($archive_location =~ m/$Settings::tarchiveLibraryDir/i) {
+                $archive_location = ($Settings::tarchiveLibraryDir . "/" . $archive_location);
+                $archive_locations = join(";", $archive_locations, $archive_location);
+                print "Archive locations are: " . join("\n", $archive_location)."\n";
+            }
+        }
     }
-    return $archive_location;
+    $archive_locations =~ s/^;//;
+    print "Archive locations concat are: " . $archive_locations ."\n";
+    return $archive_locations;
 }
 
 ################################################################
@@ -339,20 +347,25 @@ Arguments:
 
 sub runTarchiveLoader {
     my $this               = shift;
-    my $archived_file_path = $this->getTarchiveFileLocation();
-    my $command =
-        $Settings::bin_dir
-      . "/uploadNeuroDB/tarchiveLoader"
-      . " -globLocation -profile prod $archived_file_path";
+    my $archived_file_path_concat = $this->getTarchiveFileLocation();
 
-    if ($this->{verbose}){
-        $command .= " -verbose";
+    my @archived_file_paths = split(";", $archived_file_path_concat);
+    foreach my $archived_file_path (@archived_file_paths) {
+        print "Archive locations one at a time is: " . $archived_file_path ."\n";
+        my $command =
+            $Settings::bin_dir
+            . "/uploadNeuroDB/tarchiveLoader"
+            . " -globLocation -profile prod $archived_file_path";
+
+        if ($this->{verbose}){
+            $command .= " -verbose";
+        }
+        my $output = $this->runCommandWithExitCode($command);
+        if ( $output == 0 ) {
+            return 1;
+        }
+        return 0;
     }
-    my $output = $this->runCommandWithExitCode($command);
-    if ( $output == 0 ) {
-        return 1;
-    }
-    return 0;
 }
 
 ################################################################
