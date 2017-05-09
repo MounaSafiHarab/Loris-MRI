@@ -248,8 +248,6 @@ sub determineSubjectID {
         $sth->execute($subjectIDsref->{'PSCID'});
         if ( $sth->rows > 0 ) {
            $subjectIDsref->{'CandID'} = $sth->fetchrow_array;
-           my $test = $subjectIDsref->{'CandID'};
-            print "Candidate after my update is: " . $test . "\n";
         }
     }
 
