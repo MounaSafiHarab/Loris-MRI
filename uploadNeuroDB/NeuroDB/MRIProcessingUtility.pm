@@ -239,6 +239,20 @@ sub determineSubjectID {
                             $scannerID,
                             $this->{dbhr}
                         );
+
+    # if the candidate was created from the backend, it won't be in the tarchiveInfo, so add it here
+    my $dbh = &NeuroDB::DBI::connect_to_db(@Settings::db);
+    if (!defined($subjectIDsref->{'CandID'}) && $Settings::createCandidates) {
+        my $query = "SELECT CandID FROM candidate WHERE PSCID=?";
+        my $sth = ${$this->{'dbhr'}}->prepare($query);
+        $sth->execute($subjectIDsref->{'PSCID'});
+        if ( $sth->rows > 0 ) {
+           $subjectIDsref->{'CandID'} = $sth->fetchrow_array;
+           my $test = $subjectIDsref->{'CandID'};
+            print "Candidate after my update is: " . $test . "\n";
+        }
+    }
+
     if ($to_log) {
         my $message = "\n==> Data found for candidate   : ".
                             "CandID: ". $subjectIDsref->{'CandID'} .
