@@ -177,7 +177,11 @@ sub extract_tarchive {
 
     my $dcmtar = $tars[0];
     my $dcmdir = $dcmtar;
+
     $dcmdir =~ s/\.tar\.gz$//;
+# my ($filename, $dirs, $suffix) = fileparse($dcmdir);
+# $dcmdir = $dirs;
+#    $dcmdir =~ s/\_\d{1,2}\.tar\.gz$//;
 
     if (defined($seriesuid)) {
         print "seriesuid: $seriesuid\n" if $this->{verbose};
@@ -970,7 +974,10 @@ sub moveAndUpdateTarchive {
               ${$this->{'dbhr'}}->quote($newArchiveLocationField) .
              " WHERE DicomArchiveID=". 
              ${$this->{'dbhr'}}->quote(
-                $tarchiveInfo->{'DicomArchiveID'}
+                $tarchiveInfo->{'DicomArchiveID'}) .
+             " AND TarchiveID=". 
+             ${$this->{'dbhr'}}->quote(
+                $tarchiveInfo->{'TarchiveID'}
              );
     print $query . "\n"  if $this->{debug};
     ${$this->{'dbhr'}}->do($query);

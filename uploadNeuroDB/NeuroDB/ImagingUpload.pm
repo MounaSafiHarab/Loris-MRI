@@ -348,6 +348,7 @@ Arguments:
 sub runTarchiveLoader {
     my $this               = shift;
     my $archived_file_path_concat = $this->getTarchiveFileLocation();
+    my $output = '';
 
     my @archived_file_paths = split(";", $archived_file_path_concat);
     foreach my $archived_file_path (@archived_file_paths) {
@@ -360,12 +361,12 @@ sub runTarchiveLoader {
         if ($this->{verbose}){
             $command .= " -verbose";
         }
-        my $output = $this->runCommandWithExitCode($command);
-        if ( $output == 0 ) {
-            return 1;
-        }
-        return 0;
+        $output = $this->runCommandWithExitCode($command);
     }
+    if ( $output == 0 ) {
+        return 1;
+    }
+    return 0;
 }
 
 ################################################################
