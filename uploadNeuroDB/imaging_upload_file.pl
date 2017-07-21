@@ -321,6 +321,7 @@ sub getNumberOfMincFiles {
 
     my $sth = $dbh->prepare($query);
     $sth->execute($upload_id);
+    print "UploadID is: $upload_id \n";
     if ( $sth->rows > 0 ) {
         @row = $sth->fetchrow_array();
         $minc_created = $row[0];

@@ -178,10 +178,10 @@ sub extract_tarchive {
     my $dcmtar = $tars[0];
     my $dcmdir = $dcmtar;
 
-    $dcmdir =~ s/\.tar\.gz$//;
-# my ($filename, $dirs, $suffix) = fileparse($dcmdir);
-# $dcmdir = $dirs;
-#    $dcmdir =~ s/\_\d{1,2}\.tar\.gz$//;
+#    $dcmdir =~ s/\.tar\.gz$//;
+ my ($filename, $dirs, $suffix) = fileparse($dcmdir);
+ $dcmdir = $dirs;
+    $dcmdir =~ s/\_\d{1,2}\.tar\.gz$//;
 
     if (defined($seriesuid)) {
         print "seriesuid: $seriesuid\n" if $this->{verbose};
