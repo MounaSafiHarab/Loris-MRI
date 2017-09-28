@@ -258,7 +258,7 @@ sub runDicomTar {
       $Settings::bin_dir . "/" . "dicom-archive" . "/" . "dicomTar.pl";
     my $command =
         $dicomtar . " " . $this->{'uploaded_temp_folder'} 
-      . " $tarchive_location -clobber -database -profile prod";
+      . " $tarchive_location -database -profile prod";
     if ($this->{verbose}) {
         $command .= " -verbose";
     }
