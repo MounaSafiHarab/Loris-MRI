@@ -12,7 +12,7 @@ _**Table 1: Common errors encountered during LORIS-MRI installation, and their p
 |:------|:------|:----------| 
 |`install_driver(mysql) failed: Can't locate DBD/mysql.pm`|Missing dependency|`sudo apt-get install libdbd-mysql-perl`|
 |`ERROR: You don't have a configuration file named 'prod' in: /data/%PROJECT%/bin/mri/dicom-archive/.loris_mri/`| Your `environment` file does not contain your actual LORIS-MRI project name. Instead, it contains the placeholder `%PROJECT%` as provided in the 'generic' file and/or your `environment` file is not sourced| Source the environment file located in `/data/$PROJECT/bin/mri/` after making sure that the `$PROJECT` variable is replaced with your LORIS-MRI project name|
-|`ERROR: You don't have a configuration file named 'prod' in: /data/loris-MRI/bin/mri/dicom-archive/.loris_mri/` *note*: `loris-MRI` is an example project name used in this illustration| Wrong file and/or directory permissions| Make sure that the `/data/loris-MRI/bin/mri` directory, and all directories within are readable by the user running the scripts (`lorisadmin` or the front-end `apache` user)|
+|`ERROR: You don't have a configuration file named 'prod' in: /data/loris-MRI/bin/mri/dicom-archive/.loris_mri/` *note*: `loris-MRI` is an example project name used in this illustration| Wrong file and/or directory permissions| Make sure that the `/data/$PROJECT/bin/mri` directory, and all directories within are readable by the user running the scripts (`lorisadmin` or the front-end `apache` user)|
 |`ERROR: You don't have a configuration file named 'prod' in: /data/loris-MRI/bin/mri/dicom-archive/.loris_mri/` *note*: `loris-MRI` is an example project name used in this illustration| Syntax error in the `prod` file in the customized routines (for example a missing closing bracket)| Check the routines that were customized for your project needs|
 |`DB connection failed`| Database credentials in the `prod` file were entered incorrectly during the install, or they were modified subsequently| Make sure that your `prod` file contains the correct database connection/credentials information in the `DATABASE Settings, Section I`|
 
@@ -85,9 +85,9 @@ If download links do not work, ensure that the `/data/$PROJECT/data/assembly`
 Error and output messages from the imaging insertion scripts are logged in files
   created under the `/data/$PROJECT/data/logs/` directory. To view messages from
   the last script run, consult the most recent log file modified in this
-  directory. These log files reference an *uploadID* used to identify each
+  directory. These log files reference an `uploadID` used to identify each
   imaging dataset -- consult the `mri_upload` database table to look up which
-  uploadID has been assigned to your scans.
+  `uploadID` has been assigned to your scans.
 
 ***Caveat:*** When the imaging insertion pipeline is auto-launched by the
   Imaging Uploader module, the pipeline scripts' log files are output to
