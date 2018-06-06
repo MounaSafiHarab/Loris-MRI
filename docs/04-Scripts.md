@@ -137,7 +137,7 @@ In general, to re-load an imaging dataset through the pipeline from the start
 - `files` (best to delete from this table last)
 - `mri_upload`
 - `session` - not recommended - only if necessary, and only if no other data is
-    associated to this session e.g. on the Behavioural side of Loris.
+    associated to this session (*e.g.* on the Behavioural side of LORIS).
 - `tarchive`
 
 It is also recommended to remove from the tarchive directory the last generated

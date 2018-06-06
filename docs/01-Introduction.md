@@ -32,7 +32,7 @@ Uploader module. LORIS requires that the uploaded file name follow the naming
 convention `PSCID_CANDID_VISIT-LABEL`. 
 In addition, all DICOM datasets uploaded via the Imaging Uploader or 
 transferred on the LORIS-MRI server must be free of any identifying 
-information (e.g. patient name). A tool can be provided to the sites to 
+information (*e.g.* patient name). A tool can be provided to the sites to 
 facilitate de-identification. Please contact the LORIS team for details.
 
 The LORIS-MRI pipeline starts once the scans are uploaded to the server.

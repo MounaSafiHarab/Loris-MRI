@@ -43,10 +43,10 @@ each type of scan in the study protocol.
 The `mri_protocol` table is used to identify incoming scans based on their 
 series description **OR** scan parameter values (TE, TR, slice thickness, etc). 
 By default, this table is populated with entries for t1, t2, fMRI and DTI, and 
-the columns defining expected scan parameters (e.g. `TE_Range`) are defined very 
-broadly.  
+the columns defining expected scan parameters (*e.g.* `TE_Range`) are defined 
+very broadly.  
 The `Scan_type` column values are defined in the `mri_scan_type` table 
-(e.g. 44=t1). Do not include hyphens, spaces or periods in your 
+(*e.g.* 44=t1). Do not include hyphens, spaces or periods in your 
 `mri_scan_type.Scan_type` column values.
 
 5. **`Config`** table
@@ -182,7 +182,7 @@ More detailed specifications can be consulted in the
     table entry.
     * To **whitelist/blacklist** specific scan types -- *e.g.* in the case of 
     protocol exclusion, case sensitivity or labelling variance -- modify the 
-    subroutine, e.g.:
+    subroutine, *e.g.*:
 
 ```perl
 if($acquisitionProtocol eq 't1' or $acquisitionProtocol eq 't2' or $acquisitionProtocol eq 'dti' or $acquisitionProtocol eq 'bold' or $acquisitionProtocol =~ /fmri/) { return 1; }

@@ -23,7 +23,7 @@ _**Table 2: Common errors encountered due to missing LORIS (front-end) module se
 |:------|:------|:----------| 
 |Images thumbnails do not show up in Imaging Browser. They appear as a broken image icon|Wrong permissions to the `/data/$PROJECT/data/pic/` folder|Ensure that the `apache` user can read/execute the `pic` images folder|
 |Images thumbnails do not show up in Imaging Browser. They appear as a broken image icon|Wrong `Images` path under the `Paths` section in LORIS Configuration module|Ensure the path to the images is correct, typically `/data/$PROJECT/data/`|
-|4-D images (e.g. DTI, fMRI) in brainbrowser do not show any volumes (Play button not displayed)|Most likely a dcm2mnc conversion error|Post an issue on the [minc-toolkit Github Issues page](https://github.com/BIC-MNI/minc-toolkit/issues)|
+|4-D images (*e.g.* DTI, fMRI) in brainbrowser do not show any volumes (Play button not displayed)|Most likely a dcm2mnc conversion error|Post an issue on the [minc-toolkit Github Issues page](https://github.com/BIC-MNI/minc-toolkit/issues)|
 |Brainbrowser says `Loading…` but no image shows up|Wrong permissions to the `/data/$PROJECT/data/assembly/` folder|Ensure that the apache user can read/execute the MINC `assembly` images folder|
 |Brainbrowser says `Loading…` but no image shows up|Wrong `Images` path under the `Paths` section in LORIS Configuration module|Ensure the path to the MINC images is correct, typically `/data/$PROJECT/data/`| 
 |Brainbrowser says `Loading…` but no image shows up|The `config.xml` in LORIS does not have the MINC Toolkit Path set properly|Fill out the path `<MINCToolsPath>` to the MINC Toolkit Installation in the `config.xml` (on the LORIS side). The last trailing `/` in the path is mandatory|
@@ -52,8 +52,8 @@ Key configuration points to verify:
 
 - Depending on your operating system, some dependencies might be missing.
     During initial troubleshooting of the imaging pipeline, note any related
-    error messages (e.g. `install_driver(mysql) failed: Can't locate DBD/mysql
-   .pm`) and install missing packages as needed (e.g.
+    error messages (*e.g.* `install_driver(mysql) failed: Can't locate DBD/mysql
+   .pm`) and install missing packages as needed (*e.g.*
    `sudo apt-get install libdbi-perl`, `sudo apt-get install libdbd-mysql-perl`,
     `sudo apt-get install libarchive-zip-perl`).
 
@@ -100,7 +100,7 @@ Error and output messages from the imaging insertion scripts are logged in files
 If upload was successful but issues were encountered with the imaging insertion
   pipeline scripts:
 
-- CentOS: check for additional dependencies/configurations (e.g. DICOM
+- CentOS: check for additional dependencies/configurations (*e.g.* DICOM
     Dictionary path) in the detailed
     [CentOS Imaging Installation transcript](https://github.com/aces/Loris/wiki/CentOS-Imaging-installation-transcript)
 - Manually re-run the entire pipeline sequence using the 
