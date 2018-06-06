@@ -72,18 +72,18 @@ Verify in the Imaging Browser's View Session page that a `jpg` showing 3 slice
   orientations displays properly; if not, verify your permissions and restart
   apache:
 ```
-sudo chmod o+r /data/$PROJ/bin
-sudo chmod o+r /data/$PROJ/data
+sudo chmod o+r /data/$PROJECT/bin
+sudo chmod o+r /data/$PROJECT/data
 sudo service apache2 restart
 ```
 
-If download links do not work, ensure that the `/data/$PROJ/data/assembly`
+If download links do not work, ensure that the `/data/$PROJECT/data/assembly`
   directory and subdirectories are executable.
 
 ### A.3 Logs troubleshooting notes
 
 Error and output messages from the imaging insertion scripts are logged in files
-  created under the `/data/$PROJ/data/logs/` directory. To view messages from
+  created under the `/data/$PROJECT/data/logs/` directory. To view messages from
   the last script run, consult the most recent log file modified in this
   directory. These log files reference an *uploadID* used to identify each
   imaging dataset -- consult the `mri_upload` database table to look up which
