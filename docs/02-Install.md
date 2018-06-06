@@ -121,9 +121,9 @@ More detailed specifications can be consulted in the
 
 3. **Imaging Browser**
 
-The Imaging Browser module accesses the PIC images directly from the filesystem 
-where they are stored. It also provides the option to download some files.  
-Ensure that:
+The Imaging Browser module accesses the screenshot (PIC) images directly from 
+the filesystem where they are stored. It also provides the option to download 
+some files. Ensure that:
 - `/data/$PROJECT` directory and subdirectories are readable and executable by
     the Apache linux user.
 - the Configuration module (*Paths*) `Imaging data`, `MINC files` and 
@@ -190,7 +190,7 @@ if($acquisitionProtocol eq 't1' or $acquisitionProtocol eq 't2' or $acquisitionP
 
 - `getSNRModalities()`
     
-    Routine to instruct the pipeline which 3-D modalities to include when 
+    Routine to instruct the pipeline which 3D modalities to include when 
     computing the signal-to-noise-ratio (SNR) on MINC images.
 
 - `getSubjectIDs()`
@@ -200,7 +200,7 @@ if($acquisitionProtocol eq 't1' or $acquisitionProtocol eq 't2' or $acquisitionP
 
 - `filterParameters()`
 
-    Routine that takes in a file as an object and removes all parameters of lenngth > 1000
+    Routine that takes in a file as an object and removes all parameters of length > 1000
     
 - `get_DTI_Site_CandID_Visit()`
 
@@ -225,9 +225,9 @@ To ensure that BrainBrowser can load MINC images, the MINC toolkit must be
   installed on a separate machine, ensure the MINC toolkit is installed in both
   locations.)
 
-Ensure the _project/config.xml_ file (in the main LORIS codebase) contains the
+Ensure the `project/config.xml` file (in the main LORIS codebase) contains the
   following tagset, specifying the MINC toolkit path local to the main LORIS
-  codebase (/opt/minc/ in this example):
+  codebase (`/opt/minc/` in this example):
 
 ```xml
 <!-- MINC TOOLS PATH -->
@@ -236,36 +236,36 @@ Ensure the _project/config.xml_ file (in the main LORIS codebase) contains the
 
 #### 2.3.3. Verify filesystem permissions
 
-Ensure that permissions on /data/$projectname and /data/incoming and their
+Ensure that permissions on /data/$PROJECT and /data/incoming and their
   subdirectories are set such that lorisadmin and the Apache linux user can
   read, write _and_ execute all contents.
 
-The following must be recursively owned by the lorisadmin user and by Apache
+The following must be recursively owned by the lorisadmin user and Apache
   group:
 
 ```bash
-/data/$projectname/data/
-/data/$projectname/bin/mri/
+/data/$PROJECT/data/
+/data/$PROJECT/bin/mri/
 /data/incoming/
-/data/$projectname/bin/mri/dicom-archive/.loris_mri/prod
+/data/$PROJECT/bin/mri/dicom-archive/.loris_mri/prod
 ```
 
 #### 2.3.4 Verify Configuration module settings for Imaging Pipeline
 
 In the LORIS front-end, under the Admin menu, go to the `Config` module.  Verify/set the following config settings (examples below illustrated for a project named `demo`):
 
-Under the section `Imaging Pipeline`:
- * `LORIS-MRI Data Directory` (typically `/data/demo/data/`)
+Under the `Imaging Pipeline` section:
+ * `LORIS-MRI Data Directory` (typically `/data/$PROJECT/data/`)
  * `Study Name` (`exampleStudy`; this name will be appended as a prefix to the filenames in LORIS' Imaging Browser)
  * `User to notify when executing the pipeline`
- * `Full path to get_dicom_info.pl script`(typically `/data/demo/bin/mri/dicom-archive/get_dicom_info.pl`)
- * `Path to Tarchives` (typically `/data/demo/data/tarchive/`)
+ * `Full path to get_dicom_info.pl script`(typically `/data/$PROJECT/bin/mri/dicom-archive/get_dicom_info.pl`)
+ * `Path to Tarchives` (typically `/data/$PROJECT/data/tarchive/`)
 
-Under the section `Path`:
- * `Imaging Data` (typically `/data/demo/data/`)
- * `LORIS-MRI Code`(typically `/data/demo/bin/mri/`)
- * `MINC files` (typically `/data/demo/data/`)
- * `Images` (typically `/data/demo/data/`)
+Under the `Path` section:
+ * `Imaging Data` (typically `/data/$PROJECT/data/`)
+ * `LORIS-MRI Code`(typically `/data/$PROJECT/bin/mri/`)
+ * `MINC files` (typically `/data/$PROJECT/data/`)
+ * `Images` (typically `/data/$PROJECT/data/`)
 
 Click 'Submit' at the end of the Configuration page to save any changes.
 
