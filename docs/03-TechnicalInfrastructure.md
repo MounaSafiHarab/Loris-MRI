@@ -28,7 +28,7 @@ The root directory of the imaging part of a LORIS instance is typically
 Within that project directory, there are typically two directories:
 
 - The `bin/mri` directory is a copy of all the imaging scripts downloaded from
-    the [GitHub Loris-MRI repository](https://github.com/aces/Loris-MRI). 
+    the [GitHub LORIS-MRI repository](https://github.com/aces/Loris-MRI). 
     Details about the content of this folder can be found in 
     [section 5](04-Scripts.md).
 

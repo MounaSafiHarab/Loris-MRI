@@ -73,7 +73,7 @@ Under the `Paths` section:
   * `Imaging Browser Tabulated Scan Types`: Used by Imaging Browser's main page which lists the different imaging sessions across candidates. This setting will determine which modalities will have their QC status displayed in that listing page
      
  Under the `Imaging Pipeline` section: 
- * `Loris-MRI Data Directory`: Directory where imaging data is stored; typically `/data/$PROJECT/data/`
+ * `LORIS-MRI Data Directory`: Directory where imaging data is stored; typically `/data/$PROJECT/data/`
  * `Study Name`: Prefix to be used in all filenames inserted into the `files` table and visible in the front-end via the Imaging Browser module
  * `User to notify when executing the pipeline`: User email address to be used when notification is to be sent by the pipeline
  * `Full path to get_dicom_info.pl script`: Typically `/data/$PROJECT/bin/mri/dicom-arhive/get_dicom_info.pl`
@@ -255,7 +255,7 @@ The following must be recursively owned by the lorisadmin user and by Apache
 In the LORIS front-end, under the Admin menu, go to the `Config` module.  Verify/set the following config settings (examples below illustrated for a project named `demo`):
 
 Under the section `Imaging Pipeline`:
- * `Loris-MRI Data Directory` (typically `/data/demo/data/`)
+ * `LORIS-MRI Data Directory` (typically `/data/demo/data/`)
  * `Study Name` (`exampleStudy`; this name will be appended as a prefix to the filenames in LORIS' Imaging Browser)
  * `User to notify when executing the pipeline`
  * `Full path to get_dicom_info.pl script`(typically `/data/demo/bin/mri/dicom-archive/get_dicom_info.pl`)
